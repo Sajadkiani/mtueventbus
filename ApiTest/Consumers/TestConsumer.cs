@@ -19,13 +19,9 @@ public class Test2Consumer : MtuConsumer
 
     protected override async Task HandleEventAsync(IntegratedEvent message, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-        if (message is not IntegratedEvent testEvent)
-        {
-            _logger.LogError($"Received wrong event type for queue {QueueName}. EventId : {message.EventId} fullname: {nameof(message)}");
-            return;
-        }
-
+        //TODO: uncomment this for thes DLQ
+        //throw new NotImplementedException();
+        
         _logger.LogInformation($"Received event id {message.EventId}, name {typeof(TestIntegrationEvent).FullName} queue {QueueName}");
 
         // await _eventDispatcher.PublishAsync(new TestDomainEvent(testEvent.UserName));
@@ -55,13 +51,9 @@ public class TestConsumer : MtuConsumer
 
     protected override async Task HandleEventAsync(IntegratedEvent message, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-        if (message is not IntegratedEvent testEvent)
-        {
-            _logger.LogError($"Received wrong event type for queue {QueueName}. EventId : {message.EventId} fullname: {nameof(message)}");
-            return;
-        }
-
+        //TODO: uncomment this for thes DLQ
+        //throw new NotImplementedException();
+        
         _logger.LogInformation($"Received event id {message.EventId}, name {typeof(TestIntegrationEvent).FullName} queue {QueueName}");
 
         // await _eventDispatcher.PublishAsync(new TestDomainEvent(testEvent.UserName));
