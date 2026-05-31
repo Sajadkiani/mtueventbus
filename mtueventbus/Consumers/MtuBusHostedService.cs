@@ -35,11 +35,6 @@ public class MtuBusHostedService : BackgroundService
     {
         try
         {
-            //
-            // IMPORTANT:
-            // We ONLY resolve metadata here.
-            // We DO NOT keep scoped consumers alive.
-            //
             var connection =
                 await _connectionManager.GetConnectionAsync();
             
@@ -49,21 +44,46 @@ public class MtuBusHostedService : BackgroundService
             var consumers =
                 startupScope.ServiceProvider
                     .GetServices<MtuConsumer>()
-                    // .Select(x => x.GetType())
                     .Distinct()
                     .ToList();
 
             foreach (var consumer in consumers)
             {
-                //
-                // Resolve temporary instance ONLY for metadata
-                //
                 var channel =
-                    await connection.CreateChannelAsync(
-                        cancellationToken: cancellationToken);
+                    await connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
                 _channels.Add(channel);
 
+                var deadLetterExchange = $"{_options.ExchangeName}.dlx";
+                var deadLetterQueue = $"{consumer.QueueName}.dlq";
+
+                await channel.ExchangeDeclareAsync(
+                    deadLetterExchange,
+                    ExchangeType.Direct,
+                    durable: true,
+                    autoDelete: false,
+                    cancellationToken: cancellationToken);
+
+                await channel.QueueDeclareAsync(
+                    deadLetterQueue,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    cancellationToken: cancellationToken);
+
+                await channel.QueueBindAsync(
+                    queue: deadLetterQueue, 
+                    exchange: deadLetterExchange,
+                    routingKey: deadLetterQueue, //cuz the exchange is direct
+                    cancellationToken: cancellationToken);
+                
+                // Main queue arguments
+                var queueArguments = new Dictionary<string, object?>
+                {
+                    ["x-dead-letter-exchange"] = deadLetterExchange,
+                    ["x-dead-letter-routing-key"] = deadLetterQueue
+                };
+                
                 // EXCHANGE
                 await channel.ExchangeDeclareAsync(
                     exchange: _options.ExchangeName,
@@ -78,7 +98,7 @@ public class MtuBusHostedService : BackgroundService
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
-                    arguments: null,
+                    arguments: queueArguments,
                     cancellationToken: cancellationToken);
 
                 // BINDING

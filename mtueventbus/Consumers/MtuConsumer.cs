@@ -12,8 +12,6 @@ public abstract class MtuConsumer
     {
     }
 
-    protected abstract Task SaveChangesAsync(CancellationToken cancellationToken);
-    
     protected abstract Task HandleEventAsync(IntegratedEvent message, CancellationToken cancellationToken);
     
     protected abstract Task AddReceivedEventAsync(IntegratedEvent message, CancellationToken cancellationToken);
@@ -32,7 +30,6 @@ public abstract class MtuConsumer
         
         await AddReceivedEventAsync(message, cancellationToken);
 
-        await SaveChangesAsync(cancellationToken);
         
         await HandleEventAsync(message, cancellationToken);
     }
