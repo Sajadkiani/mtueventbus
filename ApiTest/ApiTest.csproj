@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MtuEventBus\MtuEventBus.csproj" />
+      <ProjectReference Include="..\mtueventbus\MtuEventBus.csproj" />
     </ItemGroup>
 
 </Project>

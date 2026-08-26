@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtuEventBus", "MtuEventBus\MtuEventBus.csproj", "{4156C115-C6F8-43B9-BDC7-C741AA2C67F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtuEventBus", "mtueventbus\MtuEventBus.csproj", "{4156C115-C6F8-43B9-BDC7-C741AA2C67F8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiTest", "ApiTest\ApiTest.csproj", "{1479355A-F0E1-42B2-85D1-5AC483237DED}"
 EndProject
