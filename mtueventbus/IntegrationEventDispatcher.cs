@@ -44,9 +44,13 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
                 autoDelete: false,
                 cancellationToken: cancellationToken);
 
-            string basicReturn = null;
-            
-            channel.BasicReturnAsync =  
+            string returnReason = null;
+
+            channel.BasicReturnAsync += (obj,args) =>
+            {
+                returnReason = $"replyCode:{args.ReplyCode} replyText{args.ReplyText} routingKey:{args.RoutingKey}";
+                return Task.CompletedTask;
+            };
             
             await channel.BasicPublishAsync(
                 exchange: _options.ExchangeName,
@@ -55,6 +59,9 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
                 basicProperties: props,
                 body: body, cancellationToken);
 
+            if (returnReason is not null)
+                throw new InvalidOperationException($"Message unroutable, routingKey='{routeKey}': {returnReason}");
+            
             _logger.LogInformation("Published integration event {EventType} to {RouteKey}", typeof(T).Name, routeKey);
         }
         catch (Exception ex)
