@@ -24,8 +24,9 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
         _logger = logger;
     }
 
-    public async Task PublishAsync<T>(string routeKey, T message, CancellationToken cancellationToken = default)
+    public async Task PublishAsync<T>(T message, CancellationToken cancellationToken = default)
     {
+        var routeKey = MtuEventBusNameFormatter.ToRoutingKey<T>();
         try
         {
             // I'm sure i will get one connection per app lifetime
@@ -36,8 +37,6 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
             var body = Encoding.UTF8.GetBytes(json);
 
             var props = new BasicProperties { Persistent = true };
-            
-            //TODO: will optional exchange type and other options
             await channel.ExchangeDeclareAsync(
                 exchange: _options.ExchangeName,
                 type: ExchangeType.Topic,
@@ -45,9 +44,13 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
                 autoDelete: false,
                 cancellationToken: cancellationToken);
 
+            string basicReturn = null;
+            
+            channel.BasicReturnAsync =  
+            
             await channel.BasicPublishAsync(
                 exchange: _options.ExchangeName,
-                routingKey: MtuEventBusNameFormatter.ToRoutingKey<T>(),
+                routingKey: routeKey,
                 mandatory: true,
                 basicProperties: props,
                 body: body, cancellationToken);

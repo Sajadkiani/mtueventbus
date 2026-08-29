@@ -1,36 +1,42 @@
-﻿using MtuEventBus.Events;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace MtuEventBus.Consumers;
 
 public abstract class MtuConsumer
 {
-    public string QueueName { get; protected set; } = default!;
-    public string RoutingKey { get; protected set; } = default!;
+    public string QueueName { get; }
+    public string RoutingKey { get; }
+
+    protected MtuConsumer(Type type)
+    {
+        RoutingKey = MtuEventBusNameFormatter.ToRoutingKey<Type>();
+        QueueName = MtuEventBusNameFormatter.ToQueueName(type);
+    }
     
-    protected MtuConsumer()
+    public abstract Task HandleAsync(string json, CancellationToken cancellationToken);
+}
+
+public abstract class MtuConsumer<TMessage> : MtuConsumer where TMessage : class 
+{
+    protected MtuConsumer() : base(typeof(TMessage))
     {
     }
 
-    protected abstract Task HandleEventAsync(IntegratedEvent message, CancellationToken cancellationToken);
+    protected abstract Task AddReceivedEventAsync(TMessage message, CancellationToken cancellationToken);
     
-    protected abstract Task AddReceivedEventAsync(IntegratedEvent message, CancellationToken cancellationToken);
-
-    public async Task HandleAsync(string json, CancellationToken cancellationToken)
+    public override async Task HandleAsync(string json, CancellationToken cancellationToken)
     {
-        if (json == null)
-            throw new NullReferenceException("json message is null");
+        if (string.IsNullOrWhiteSpace(json))
+            throw new ArgumentException("JSON message is null or empty.", nameof(json));
 
-        var message = JsonConvert.DeserializeObject<IntegratedEvent>(json);
+        var message = JsonConvert.DeserializeObject<TMessage>(json);
         if (message == null)
-            throw new NullReferenceException("message is null");
+            throw new InvalidOperationException($"Unable to deserialize message as {typeof(TMessage).Name}.");
 
-        // await _context.AppReceivedEvents.AddAsync(new AppReceivedEvent(message.EventId, message.FullName, json),
-        //     cancellationToken);
-        
         await AddReceivedEventAsync(message, cancellationToken);
 
-        
         await HandleEventAsync(message, cancellationToken);
     }
+
+    protected abstract Task HandleEventAsync(TMessage message, CancellationToken cancellationToken);
 }

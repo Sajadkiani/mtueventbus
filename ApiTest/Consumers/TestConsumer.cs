@@ -3,21 +3,16 @@ using MtuEventBus.Events;
 
 namespace ApiTest.Consumers;
 
-public class Test2Consumer : MtuConsumer
+public class Test2Consumer : MtuConsumer<TestIntegrationEvent>
 {
     private readonly ILogger<Test2Consumer> _logger;
     
-    public Test2Consumer(
-        ILogger<Test2Consumer> logger) 
+    public Test2Consumer(ILogger<Test2Consumer> logger) 
     {
         _logger = logger;
-        
-        //TODO: move these lines to parent class
-        RoutingKey = MtuEventBusNameFormatter.ToRoutingKey<Test2IntegrationEvent>();
-        QueueName = MtuEventBusNameFormatter.GetQueueName("artwork");
     }
 
-    protected override async Task HandleEventAsync(IntegratedEvent message, CancellationToken cancellationToken)
+    protected override async Task HandleEventAsync(TestIntegrationEvent message, CancellationToken cancellationToken)
     {
         //TODO: uncomment this for thes DLQ
         //throw new NotImplementedException();
@@ -28,28 +23,23 @@ public class Test2Consumer : MtuConsumer
         _logger.LogInformation("Handled event");
     }
 
-    protected override Task AddReceivedEventAsync(IntegratedEvent message, CancellationToken cancellationToken)
+    protected override Task AddReceivedEventAsync(TestIntegrationEvent message, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Event id {message.EventId} added to inbox.");
         return Task.CompletedTask;
     }
 }
 
-public class TestConsumer : MtuConsumer
+public class TestConsumer : MtuConsumer<TestIntegrationEvent>
 {
     private readonly ILogger<TestConsumer> _logger;
     
-    public TestConsumer(
-        ILogger<TestConsumer> logger) 
+    public TestConsumer(ILogger<TestConsumer> logger) 
     {
         _logger = logger;
-        
-        //TODO: move these lines to parent class
-        RoutingKey = MtuEventBusNameFormatter.ToRoutingKey<TestIntegrationEvent>();
-        QueueName = MtuEventBusNameFormatter.GetQueueName("artwork");
     }
 
-    protected override async Task HandleEventAsync(IntegratedEvent message, CancellationToken cancellationToken)
+    protected override async Task HandleEventAsync(TestIntegrationEvent message, CancellationToken cancellationToken)
     {
         //TODO: uncomment this for thes DLQ
         //throw new NotImplementedException();
@@ -60,7 +50,7 @@ public class TestConsumer : MtuConsumer
         _logger.LogInformation("Handled event");
     }
 
-    protected override Task AddReceivedEventAsync(IntegratedEvent message, CancellationToken cancellationToken)
+    protected override Task AddReceivedEventAsync(TestIntegrationEvent message, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Event id {message.EventId} added to inbox.");
         return Task.CompletedTask;

@@ -50,7 +50,9 @@ public class MtuBusHostedService : BackgroundService
             foreach (var consumer in consumers)
             {
                 var channel =
-                    await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+                    await connection.CreateChannelAsync(
+                        new CreateChannelOptions(publisherConfirmationsEnabled: true,
+                            publisherConfirmationTrackingEnabled: true), cancellationToken);
 
                 _channels.Add(channel);
 

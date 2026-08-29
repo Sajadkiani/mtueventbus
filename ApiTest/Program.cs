@@ -27,12 +27,10 @@ app.UseHttpsRedirection();
 
 app.Map("publish/evt", async (IIntegrationEventDispatcher eventDispatcher) =>
 {
-    await eventDispatcher.PublishAsync(nameof(TestIntegrationEvent),
-        new TestIntegrationEvent("test user", Guid.NewGuid(), DateTime.Now,
+    await eventDispatcher.PublishAsync(new TestIntegrationEvent("test user", Guid.NewGuid(), DateTime.Now,
             Guid.NewGuid()));      
        
-    await eventDispatcher.PublishAsync(nameof(Test2IntegrationEvent),
-        new Test2IntegrationEvent("test 2 user", Guid.NewGuid(), DateTime.Now,
+    await eventDispatcher.PublishAsync(new Test2IntegrationEvent("test 2 user", Guid.NewGuid(), DateTime.Now,
             Guid.NewGuid()));      
 });
 

@@ -1,10 +1,35 @@
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 
 public static class MtuEventBusNameFormatter
 {
-    public static string GetQueueName(string name)
+    public static string ToQueueName(Type type)
     {
-        return $"{name}.service";
+        ArgumentNullException.ThrowIfNull(type);
+        
+        var serviceName = type.FullName.Split('.').First();
+        var queueName = $"{DashSeparateString(serviceName)}.{DashSeparateString(type.Name)}";
+        
+        return queueName;
+    }
+
+    private static string DashSeparateString(string serviceName)
+    {
+        var stringBuilder = new StringBuilder();
+        for (int i = 0; i < serviceName.Length ; i++)
+        {
+            if (char.IsUpper(serviceName[i]))
+            {
+                if (i > 0)
+                {
+                    stringBuilder.Append('-');
+                }
+            }
+
+            stringBuilder.Append(char.ToLower(serviceName[i]));
+        }
+
+        return stringBuilder.ToString();
     }
 
     public static string ToRoutingKey<T>()
