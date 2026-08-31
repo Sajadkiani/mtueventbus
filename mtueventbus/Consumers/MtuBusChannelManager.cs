@@ -7,7 +7,7 @@ public interface IMtuBusChannelManager
     Task<IChannel> GetChannelAsync(CancellationToken cancellationToken = default);
 }
 
-public class MtuBusChannelManager : IMtuBusChannelManager
+public class MtuBusChannelManager : IMtuBusChannelManager, IAsyncDisposable
 {
     private readonly IMtuBusConnectionManager _mtuBusConnectionManager;
     private readonly SemaphoreSlim _semaphore = new (1, 1);
@@ -19,13 +19,12 @@ public class MtuBusChannelManager : IMtuBusChannelManager
     
     public async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken = default)
     {
+        if (_channel is { IsOpen: true })
+            return _channel;
+
+        await _semaphore.WaitAsync(cancellationToken);
         try
-        {
-            if (_channel is { IsOpen: true })
-                return _channel;
-            
-            await _semaphore.WaitAsync(cancellationToken);
-            
+        {       
             if (_channel is { IsOpen: true })
                 return _channel;
             
@@ -34,10 +33,20 @@ public class MtuBusChannelManager : IMtuBusChannelManager
             
             return _channel;
         }
-        catch (Exception e)
+        finally
         {
-            Console.WriteLine(e);
-            throw;
+            _semaphore.Dispose();
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_channel is { IsOpen: true })
+        {
+            await _channel.DisposeAsync();
+            _channel = null!;
+        }
+        
+        _semaphore.Dispose();
     }
 }
