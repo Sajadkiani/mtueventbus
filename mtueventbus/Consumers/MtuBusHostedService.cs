@@ -36,7 +36,7 @@ public class MtuBusHostedService : BackgroundService
         try
         {
             var connection =
-                await _connectionManager.GetConnectionAsync();
+                await _connectionManager.GetConnectionAsync(cancellationToken);
             
             using var startupScope =
                 _serviceProvider.CreateScope();

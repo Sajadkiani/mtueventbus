@@ -37,6 +37,7 @@ public static class MtuEventBusExtension
     private static void AddMtuPublisher(IServiceCollection services)
     {
         services.AddSingleton<IMtuBusConnectionManager, MtuBusConnectionManager>();
+        services.AddSingleton<IMtuBusChannelManager, MtuBusChannelManager>();
         services.AddSingleton<IIntegrationEventDispatcher, IntegrationEventDispatcher>();
     }
 }

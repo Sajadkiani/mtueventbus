@@ -10,64 +10,85 @@ namespace MtuEventBus;
 
 public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
 {
-    private readonly IMtuBusConnectionManager _connectionManager;
     private readonly MtuRabbitMqOptions _options;
+    private readonly IMtuBusChannelManager _channelManager;
     private readonly ILogger<IntegrationEventDispatcher> _logger;
 
     public IntegrationEventDispatcher(
-        IMtuBusConnectionManager connectionManager,
+        IMtuBusChannelManager channelManager,
         IOptionsMonitor<MtuRabbitMqOptions> optionsMonitor,
         ILogger<IntegrationEventDispatcher> logger)
     {
-        _connectionManager = connectionManager;
         _options = optionsMonitor.CurrentValue;
+        _channelManager = channelManager;
         _logger = logger;
     }
 
     public async Task PublishAsync<T>(T message, CancellationToken cancellationToken = default)
     {
-        var routeKey = MtuEventBusNameFormatter.ToRoutingKey<T>();
         try
         {
-            // I'm sure i will get one connection per app lifetime
-            var connection = await _connectionManager.GetConnectionAsync();
-            await using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            var channel = await _channelManager.GetChannelAsync(cancellationToken);
 
-            var json = JsonSerializer.Serialize(message);
-            var body = Encoding.UTF8.GetBytes(json);
+            await DeclareExchangeAsync(channel, cancellationToken);
 
-            var props = new BasicProperties { Persistent = true };
-            await channel.ExchangeDeclareAsync(
-                exchange: _options.ExchangeName,
-                type: ExchangeType.Topic,
-                durable: true,
-                autoDelete: false,
-                cancellationToken: cancellationToken);
-
-            string returnReason = null;
-
-            channel.BasicReturnAsync += (obj,args) =>
-            {
-                returnReason = $"replyCode:{args.ReplyCode} replyText{args.ReplyText} routingKey:{args.RoutingKey}";
-                return Task.CompletedTask;
-            };
+            var returnReason = SetBasicReturnHandlerAsync(channel);
             
-            await channel.BasicPublishAsync(
-                exchange: _options.ExchangeName,
-                routingKey: routeKey,
-                mandatory: true,
-                basicProperties: props,
-                body: body, cancellationToken);
+            await PublishAsync(message, cancellationToken, channel);
 
-            if (returnReason is not null)
-                throw new InvalidOperationException($"Message unroutable, routingKey='{routeKey}': {returnReason}");
-            
-            _logger.LogInformation("Published integration event {EventType} to {RouteKey}", typeof(T).Name, routeKey);
+            CheckIfMessageRouted<T>(returnReason);
+
+            _logger.LogInformation("Published integration event {EventType} to {RouteKey}",
+                typeof(T).Name,
+                MtuEventBusNameFormatter.ToRoutingKey(typeof(T)));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error publishing to RabbitMQ queue {routeKey}.");
+            _logger.LogError(ex, $"Error publishing to RabbitMQ queue {MtuEventBusNameFormatter.ToRoutingKey(typeof(T))}.");
             throw;
         }
+    }
+
+    private static string? SetBasicReturnHandlerAsync(IChannel channel)
+    {
+        string returnReason = null;
+        channel.BasicReturnAsync += (obj,args) =>
+        {
+            returnReason = $"replyCode:{args.ReplyCode} replyText{args.ReplyText} routingKey:{args.RoutingKey}";
+            return Task.CompletedTask;
+        };
+        
+        return returnReason;
+    }
+
+    private static void CheckIfMessageRouted<T>(string? returnReason)
+    {
+        string routeKey = MtuEventBusNameFormatter.ToRoutingKey(typeof(T));
+        if (returnReason is not null)
+            throw new InvalidOperationException($"Message unroutable, routingKey='{routeKey}': {returnReason}");
+    }
+
+    private async Task PublishAsync<T>(T message, CancellationToken cancellationToken, IChannel channel)
+    {
+        var json = JsonSerializer.Serialize(message);
+        var body = Encoding.UTF8.GetBytes(json);
+        var props = new BasicProperties { Persistent = true };
+            
+        await channel.BasicPublishAsync(
+            exchange: _options.ExchangeName,
+            routingKey: MtuEventBusNameFormatter.ToRoutingKey(typeof(T)),
+            mandatory: true,
+            basicProperties: props,
+            body: body, cancellationToken);
+    }
+
+    private async Task DeclareExchangeAsync(IChannel channel, CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(
+            exchange: _options.ExchangeName,
+            type: ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            cancellationToken: cancellationToken);
     }
 }

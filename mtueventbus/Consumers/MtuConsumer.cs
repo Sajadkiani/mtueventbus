@@ -9,7 +9,7 @@ public abstract class MtuConsumer
 
     protected MtuConsumer(Type type)
     {
-        RoutingKey = MtuEventBusNameFormatter.ToRoutingKey<Type>();
+        RoutingKey = MtuEventBusNameFormatter.ToRoutingKey(type);
         QueueName = MtuEventBusNameFormatter.ToQueueName(type);
     }
     

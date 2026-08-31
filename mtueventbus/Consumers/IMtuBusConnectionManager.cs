@@ -4,5 +4,5 @@ namespace MtuEventBus.Consumers;
 
 public interface IMtuBusConnectionManager
 {
-    Task<IConnection> GetConnectionAsync();
+    Task<IConnection> GetConnectionAsync(CancellationToken cancellationToken);
 }

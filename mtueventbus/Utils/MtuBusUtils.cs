@@ -18,25 +18,15 @@ public static class MtuEventBusNameFormatter
         var stringBuilder = new StringBuilder();
         for (int i = 0; i < serviceName.Length ; i++)
         {
-            if (char.IsUpper(serviceName[i]))
-            {
-                if (i > 0)
-                {
-                    stringBuilder.Append('-');
-                }
-            }
-
+            if (i <= 0 || !char.IsUpper(serviceName[i])) continue;
+            
+            stringBuilder.Append('-');
             stringBuilder.Append(char.ToLower(serviceName[i]));
         }
 
         return stringBuilder.ToString();
     }
-
-    public static string ToRoutingKey<T>()
-    {
-        return ToRoutingKey(typeof(T));
-    }
-
+    
     public static string ToRoutingKey(Type type)
     {
         var builder = new StringBuilder();

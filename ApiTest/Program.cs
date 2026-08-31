@@ -20,12 +20,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(otp => otp.SwaggerEndpoint("/openapi/v1.json", "ApiTest"));
 }
 
 app.UseHttpsRedirection();
 
 
-app.Map("publish/evt", async (IIntegrationEventDispatcher eventDispatcher) =>
+app.MapPost("publish/evt", async (IIntegrationEventDispatcher eventDispatcher) =>
 {
     await eventDispatcher.PublishAsync(new TestIntegrationEvent("test user", Guid.NewGuid(), DateTime.Now,
             Guid.NewGuid()));      

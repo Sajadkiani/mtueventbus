@@ -5,7 +5,7 @@ using RabbitMQ.Client;
 
 namespace MtuEventBus.Consumers;
 
-public class MtuBusConnectionManager : IMtuBusConnectionManager, IDisposable
+public class MtuBusConnectionManager : IMtuBusConnectionManager, IAsyncDisposable
 {
     private readonly MtuRabbitMqOptions _options;
     private readonly ILogger<MtuBusConnectionManager> _logger;
@@ -22,7 +22,7 @@ public class MtuBusConnectionManager : IMtuBusConnectionManager, IDisposable
     /// <summary>
     /// get an connection if exist old one or create new one
     /// </summary>
-    public async Task<IConnection> GetConnectionAsync()
+    public async Task<IConnection> GetConnectionAsync(CancellationToken cancellationToken = default)
     {
         if (_connection is { IsOpen: true })
             return _connection;
@@ -35,16 +35,16 @@ public class MtuBusConnectionManager : IMtuBusConnectionManager, IDisposable
         };
 
         _logger.LogInformation($"Creating new MTU bus connection to {_options.HostName}.");
-        _connection = await factory.CreateConnectionAsync();
+        _connection = await factory.CreateConnectionAsync(cancellationToken);
         return _connection;
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (_connection is { IsOpen: true })
         {
             _logger.LogInformation("Closing MTU bus connection...");
-            _connection.CloseAsync().GetAwaiter().GetResult();
+            await _connection.CloseAsync();
             _connection.Dispose();
         }
     }
