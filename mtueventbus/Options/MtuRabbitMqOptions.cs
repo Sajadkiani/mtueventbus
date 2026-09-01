@@ -7,5 +7,5 @@ public class MtuRabbitMqOptions
     public string Password { get; set; } = "guest";
     public string VirtualHost { get; set; } = "/";
     public int Port { get; set; } = 5672;
-    public string ExchangeName { get; set; } = default!;
+    public string ExchangeName { get; set; } = "mtu-exchange";
 }

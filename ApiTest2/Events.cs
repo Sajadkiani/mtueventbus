@@ -1,6 +1,6 @@
 using MtuEventBus.Events;
 
-namespace ApiTest;
+namespace MtuSubscriber;
 
 public class Test2IntegrationEvent : IntegratedEvent
 {

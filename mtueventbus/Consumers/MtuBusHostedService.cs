@@ -14,20 +14,20 @@ public class MtuBusHostedService : BackgroundService
 {
     private readonly ILogger<MtuBusHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IMtuBusConnectionManager _connectionManager;
+    private readonly IMtuBusChannelManager _mtuBusChannelManager;
     private readonly MtuRabbitMqOptions _options;
 
     private readonly List<IChannel> _channels = new();
 
     public MtuBusHostedService(
-        IMtuBusConnectionManager connectionManager,
+        IMtuBusChannelManager mtuBusChannelManager,
         ILogger<MtuBusHostedService> logger,
         IServiceProvider serviceProvider,
         IOptions<MtuRabbitMqOptions> options)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
-        _connectionManager = connectionManager;
+        _mtuBusChannelManager = mtuBusChannelManager;
         _options = options.Value;
     }
 
@@ -35,9 +35,6 @@ public class MtuBusHostedService : BackgroundService
     {
         try
         {
-            var connection =
-                await _connectionManager.GetConnectionAsync(cancellationToken);
-            
             using var startupScope =
                 _serviceProvider.CreateScope();
 
@@ -49,11 +46,7 @@ public class MtuBusHostedService : BackgroundService
 
             foreach (var consumer in consumers)
             {
-                var channel =
-                    await connection.CreateChannelAsync(
-                        new CreateChannelOptions(publisherConfirmationsEnabled: true,
-                            publisherConfirmationTrackingEnabled: true), cancellationToken);
-
+                var channel = await _mtuBusChannelManager.GetChannelAsync(cancellationToken);
                 _channels.Add(channel);
 
                 var deadLetterExchange = $"{_options.ExchangeName}.dlx";
@@ -134,6 +127,28 @@ public class MtuBusHostedService : BackgroundService
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing event {RoutingKey}", ea.RoutingKey);
+
+                        var props = new BasicProperties(ea.BasicProperties)
+                        {
+                            Headers = new Dictionary<string, object?>(ea.BasicProperties.Headers ??
+                                                                      new Dictionary<string, object?>())
+                            {
+                                ["x-exception-type"] = ex.GetType().FullName,
+                                ["x-exception-message"] = ex.Message,
+                                ["x-exception-stacktrace"] = ex.StackTrace,
+                                ["x-exception-time"] = DateTimeOffset.UtcNow.ToString("O")
+                            }
+                        };
+
+                        // Publish directly to the DLX with enriched headers, then ack the original
+                        await channel.BasicPublishAsync(
+                            exchange: deadLetterExchange,
+                            routingKey: deadLetterQueue,
+                            mandatory: false,
+                            basicProperties: props,
+                            body: ea.Body,
+                            cancellationToken: cancellationToken);
+                        
                         await channel.BasicNackAsync(ea.DeliveryTag, false, false, cancellationToken);
                     }
                 };

@@ -16,16 +16,17 @@ public static class MtuEventBusNameFormatter
     private static string DashSeparateString(string serviceName)
     {
         var stringBuilder = new StringBuilder();
-        for (int i = 0; i < serviceName.Length ; i++)
+        for (int i = 0; i < serviceName.Length; i++)
         {
             if (char.IsUpper(serviceName[i]))
             {
                 if (i > 0)
                 {
                     stringBuilder.Append('-');
-                    stringBuilder.Append(char.ToLower(serviceName[i]));
                 }
             }
+
+            stringBuilder.Append(char.ToLower(serviceName[i]));
         }
 
         return stringBuilder.ToString();

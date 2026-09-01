@@ -29,7 +29,9 @@ public class MtuBusChannelManager : IMtuBusChannelManager, IAsyncDisposable
                 return _channel;
             
             var connection = await _mtuBusConnectionManager.GetConnectionAsync(cancellationToken);
-            _channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            _channel = await connection.CreateChannelAsync(
+                new CreateChannelOptions(publisherConfirmationsEnabled: true,
+                    publisherConfirmationTrackingEnabled: true), cancellationToken);
             
             return _channel;
         }
