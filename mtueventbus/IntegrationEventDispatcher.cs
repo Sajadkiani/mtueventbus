@@ -24,10 +24,11 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
         _logger = logger;
     }
 
-    public async Task PublishAsync<T>(T message, CancellationToken cancellationToken = default)
+    public async Task PublishAsync(object message, CancellationToken cancellationToken = default)
     {
         try
         {
+            var type = message.GetType();
             var channel = await _channelManager.GetChannelAsync(cancellationToken);
 
             await DeclareExchangeAsync(channel, cancellationToken);
@@ -36,15 +37,15 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
             
             await PublishAsync(message, cancellationToken, channel);
 
-            CheckIfMessageRouted<T>(returnReason);
+            CheckIfMessageRouted(type, returnReason);
 
             _logger.LogInformation("Published integration event {EventType} to {RouteKey}",
-                typeof(T).Name,
-                MtuEventBusNameFormatter.ToRoutingKey(typeof(T)));
+                message.GetType().Name,
+                MtuEventBusNameFormatter.ToRoutingKey(type));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error publishing to RabbitMQ queue {MtuEventBusNameFormatter.ToRoutingKey(typeof(T))}.");
+            _logger.LogError(ex, $"Error publishing to RabbitMQ queue {MtuEventBusNameFormatter.ToRoutingKey(message.GetType())}.");
             throw;
         }
     }
@@ -61,14 +62,14 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
         return returnReason;
     }
 
-    private static void CheckIfMessageRouted<T>(string? returnReason)
+    private static void CheckIfMessageRouted(Type type, string? returnReason)
     {
-        string routeKey = MtuEventBusNameFormatter.ToRoutingKey(typeof(T));
+        string routeKey = MtuEventBusNameFormatter.ToRoutingKey(type);
         if (returnReason is not null)
             throw new InvalidOperationException($"Message unroutable, routingKey='{routeKey}': {returnReason}");
     }
 
-    private async Task PublishAsync<T>(T message, CancellationToken cancellationToken, IChannel channel)
+    private async Task PublishAsync(object message, CancellationToken cancellationToken, IChannel channel)
     {
         var json = JsonSerializer.Serialize(message);
         var body = Encoding.UTF8.GetBytes(json);
@@ -76,7 +77,7 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
             
         await channel.BasicPublishAsync(
             exchange: _options.ExchangeName,
-            routingKey: MtuEventBusNameFormatter.ToRoutingKey(typeof(T)),
+            routingKey: MtuEventBusNameFormatter.ToRoutingKey(message.GetType()),
             mandatory: true,
             basicProperties: props,
             body: body, cancellationToken);

@@ -1,11 +1,9 @@
-using MtuEventBus.Events;
-
 namespace MtuPublisher;
 
-public class Test2IntegrationEvent : IntegratedEvent
+public class Test2IntegrationEvent
 {
     public Test2IntegrationEvent(string test2IntegrationEventProperty, Guid eventId, DateTime createdOn,
-        Guid? correlationId = null) : base(eventId, createdOn, correlationId)
+        Guid? correlationId = null)
     {
         Test2IntegrationEventProperty = test2IntegrationEventProperty;
     }
@@ -13,11 +11,14 @@ public class Test2IntegrationEvent : IntegratedEvent
     public string Test2IntegrationEventProperty { get; init; }
 }
 
-public class TestIntegrationEvent : IntegratedEvent
+public class TestIntegrationEvent
 {
-    public TestIntegrationEvent(string testIntegrationEventProperty, Guid eventId,
-        DateTime createdOn, Guid? correlationId = null
-    ) : base(eventId, createdOn, correlationId)
+    public TestIntegrationEvent(
+        string testIntegrationEventProperty,
+        Guid eventId,
+        DateTime createdOn,
+        Guid? correlationId = null
+    )
     {
         TestIntegrationEventProperty = testIntegrationEventProperty;
     }
