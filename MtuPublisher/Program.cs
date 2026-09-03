@@ -23,7 +23,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
-app.MapPost("publish/evt", async (IIntegrationEventDispatcher eventDispatcher) =>
+app.MapPost("publish/evt", async (IMtuBusDispatcher eventDispatcher) =>
 {
     await eventDispatcher.PublishAsync(new TestIntegrationEvent("test user", Guid.NewGuid(), DateTime.Now,
             Guid.NewGuid()));      

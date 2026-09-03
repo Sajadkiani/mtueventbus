@@ -8,16 +8,16 @@ using RabbitMQ.Client;
 
 namespace MtuEventBus;
 
-public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
+public sealed class MtuBusDispatcher : IMtuBusDispatcher
 {
     private readonly MtuRabbitMqOptions _options;
     private readonly IMtuBusChannelManager _channelManager;
-    private readonly ILogger<IntegrationEventDispatcher> _logger;
+    private readonly ILogger<MtuBusDispatcher> _logger;
 
-    public IntegrationEventDispatcher(
+    public MtuBusDispatcher(
         IMtuBusChannelManager channelManager,
         IOptionsMonitor<MtuRabbitMqOptions> optionsMonitor,
-        ILogger<IntegrationEventDispatcher> logger)
+        ILogger<MtuBusDispatcher> logger)
     {
         _options = optionsMonitor.CurrentValue;
         _channelManager = channelManager;
@@ -30,8 +30,6 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
         {
             var type = message.GetType();
             var channel = await _channelManager.GetChannelAsync(cancellationToken);
-
-            await DeclareExchangeAsync(channel, cancellationToken);
 
             var returnReason = SetBasicReturnHandlerAsync(channel);
             
@@ -81,15 +79,5 @@ public sealed class IntegrationEventDispatcher : IIntegrationEventDispatcher
             mandatory: true,
             basicProperties: props,
             body: body, cancellationToken);
-    }
-
-    private async Task DeclareExchangeAsync(IChannel channel, CancellationToken cancellationToken)
-    {
-        await channel.ExchangeDeclareAsync(
-            exchange: _options.ExchangeName,
-            type: ExchangeType.Topic,
-            durable: true,
-            autoDelete: false,
-            cancellationToken: cancellationToken);
-    }
+    }    
 }

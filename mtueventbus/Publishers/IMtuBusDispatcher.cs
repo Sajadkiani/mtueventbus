@@ -1,6 +1,6 @@
 namespace MtuEventBus;
 
-public interface IIntegrationEventDispatcher
+public interface IMtuBusDispatcher
 {
     Task PublishAsync(object message, CancellationToken cancellationToken = default);
 }

@@ -22,7 +22,7 @@ public static class MtuEventBusExtension
         var mtuRabbitmq = configuration.GetSection(sectionName);
         if (mtuRabbitmq is null)
         {
-            throw new Exception("rabbitmq section not found");
+            throw new Exception("configs not found.");
         }
 
         services.Configure<MtuRabbitMqOptions>(mtuRabbitmq);
@@ -36,8 +36,10 @@ public static class MtuEventBusExtension
 
     private static void AddMtuPublisher(IServiceCollection services)
     {
+        services.AddSingleton<MtuBusPublisherInitializer>();
         services.AddSingleton<IMtuBusConnectionManager, MtuBusConnectionManager>();
         services.AddSingleton<IMtuBusChannelManager, MtuBusChannelManager>();
-        services.AddSingleton<IIntegrationEventDispatcher, IntegrationEventDispatcher>();
+        services.AddSingleton<IMtuBusDispatcher, MtuBusDispatcher>();
+        services.AddHostedService<MtuBusPublisherHostedService>();
     }
 }

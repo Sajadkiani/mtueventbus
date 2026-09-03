@@ -2,11 +2,11 @@
 
 namespace MtuSubscriber.Consumers;
 
-public class Test2Consumer : MtuConsumer<Test2IntegrationEvent>
+public class Test2Consumer : TestIdempotencyConsumer<Test2IntegrationEvent>
 {
     private readonly ILogger<Test2Consumer> _logger;
     
-    public Test2Consumer(ILogger<Test2Consumer> logger) 
+    public Test2Consumer(ILogger<Test2Consumer> logger) : base(logger)
     {
         _logger = logger;
     }
