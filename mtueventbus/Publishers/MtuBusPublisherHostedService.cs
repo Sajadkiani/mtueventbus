@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 
-namespace MtuEventBus;
+namespace MtuEventBus.Publishers;
 
 public class MtuBusPublisherHostedService : IHostedService
 {

@@ -1,4 +1,4 @@
-namespace MtuEventBus;
+namespace MtuEventBus.Publishers;
 
 public interface IMtuBusDispatcher
 {

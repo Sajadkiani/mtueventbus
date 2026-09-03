@@ -2,6 +2,7 @@ using MtuPublisher;
 using MtuEventBus;
 using MtuEventBus.Consumers;
 using MtuEventBus.Extensions;
+using MtuEventBus.Publishers;
 
 var builder = WebApplication.CreateBuilder(args);
 

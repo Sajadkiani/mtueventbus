@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MtuEventBus.Consumers;
 using MtuEventBus.Options;
+using MtuEventBus.Publishers;
 
 namespace MtuEventBus.Extensions;
 

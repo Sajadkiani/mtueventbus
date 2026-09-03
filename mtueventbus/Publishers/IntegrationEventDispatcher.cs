@@ -6,7 +6,7 @@ using MtuEventBus.Consumers;
 using MtuEventBus.Options;
 using RabbitMQ.Client;
 
-namespace MtuEventBus;
+namespace MtuEventBus.Publishers;
 
 public sealed class MtuBusDispatcher : IMtuBusDispatcher
 {
