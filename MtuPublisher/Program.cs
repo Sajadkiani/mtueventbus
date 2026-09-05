@@ -1,3 +1,4 @@
+using System.Reflection;
 using MtuPublisher;
 using MtuEventBus;
 using MtuEventBus.Consumers;
@@ -7,7 +8,7 @@ using MtuEventBus.Publishers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Mtu bus configs
-builder.Services.AddMtuBus(builder.Configuration, sectionName:"RabbitMq");
+builder.Services.AddMtuBus(builder.Configuration, Assembly.GetAssembly(typeof(Program)), sectionName:"RabbitMq");
 
 
 

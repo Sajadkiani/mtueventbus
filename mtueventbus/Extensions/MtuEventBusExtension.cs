@@ -9,11 +9,12 @@ namespace MtuEventBus.Extensions;
 
 public static class MtuEventBusExtension
 {
-    public static IServiceCollection AddMtuBus(this IServiceCollection services, IConfiguration configuration, string sectionName = "RabbitMq")
+    public static IServiceCollection AddMtuBus(this IServiceCollection services, IConfiguration configuration, 
+        Assembly? consumerAssembly, string sectionName = "RabbitMq")
     {
         ConfigureMtuOptions(services, sectionName, configuration);
         AddMtuPublisher(services);
-        AddMtuConsumers(services);
+        AddMtuConsumers(services, consumerAssembly);
 
         return services;
     }
@@ -29,8 +30,18 @@ public static class MtuEventBusExtension
         services.Configure<MtuRabbitMqOptions>(mtuRabbitmq);
     }
 
-    private static IServiceCollection AddMtuConsumers(IServiceCollection services)
+    private static IServiceCollection AddMtuConsumers(IServiceCollection services, Assembly? assembly)
     {
+        var mtuConsumerType = typeof(MtuConsumer);
+
+        var consumerTypes = assembly.GetTypes().Where(item =>
+            item is { IsAbstract: false, IsClass: true , IsGenericType: false} && item.IsAssignableTo(mtuConsumerType));
+
+        foreach (var consumerType in consumerTypes)
+        {
+            services.AddScoped(mtuConsumerType, consumerType);
+        }
+        
         services.AddHostedService<MtuBusHostedService>();
         return services;
     }
