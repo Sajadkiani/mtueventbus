@@ -140,6 +140,9 @@ public class MtuBusHostedService : BackgroundService
                             }
                         };
 
+                        // There are two way of keep failed massages
+                        // TODO: trade-of for choose one
+                        // 1:
                         // Publish directly to the DLX with enriched headers, then ack the original
                         await channel.BasicPublishAsync(
                             exchange: deadLetterExchange,
@@ -149,6 +152,7 @@ public class MtuBusHostedService : BackgroundService
                             body: ea.Body,
                             cancellationToken: cancellationToken);
                         
+                        //2: Let the rabbitmq handle the failed message
                         await channel.BasicNackAsync(ea.DeliveryTag, false, false, cancellationToken);
                     }
                 };
