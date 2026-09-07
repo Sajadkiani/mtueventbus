@@ -53,7 +53,7 @@ jobs:
 
           echo "Package version: $VERSION"
 
-          dotnet pack \
+          dotnet pack ./mtueventbus/MtuEventBus.csproj \
             --configuration Release \
             --no-restore \
             -p:PackageVersion=$VERSION \
